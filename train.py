@@ -49,7 +49,11 @@ def test_model(model, vectorizer, text):
 # Example usage of the test_model function
 if __name__ == "__main__":
     # Train the model
-    model, vectorizer = train_model()
+    #model, vectorizer = train_model()
+
+    # Load the model and vectorizer
+    model, vectorizer = joblib.load("sentiment_model.pkl")
+
 
     # Test the model with a new text input
     test_text = "The food was amazing!"
