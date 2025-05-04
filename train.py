@@ -1,63 +1,54 @@
+import os
 import joblib
-from sklearn.linear_model import LogisticRegression
+import pandas as pd
+
+from lib_ml.preprocessing import clean_review, tokenize_review
 from sklearn.feature_extraction.text import CountVectorizer
-from lib_ml.preprocessing import clean_text
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import accuracy_score
 
-
-
-def train_model():
+def test_model(clf, X_test, y_test):
     """
-    Train a sentiment analysis model using logistic regression.
+    Tests the accuracy of the trained model on the test set.
     """
-    # Dummy training data
-    texts = ["Great food!", "Terrible service."]
-    labels = [1, 0]  # 1=positive, 0=negative
+    y_pred = clf.predict(X_test)
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"Model accuracy: {accuracy:.2%}")
+    return accuracy
 
-    # Preprocess
-    X = [clean_text(text) for text in texts]
+def main():
+    df = pd.read_csv("data/a1_RestaurantReviews_HistoricDump.tsv", 
+                     sep="\t", quoting=3)
+    texts = df.Review.tolist()
+    labels = df.Liked
 
-    # Vectorize
-    vectorizer = CountVectorizer()
-    X_vec = vectorizer.fit_transform(X)
+    # Build vectorizer & train-test split
+    vect = CountVectorizer(preprocessor=clean_review,
+                           tokenizer=tokenize_review)
+    X = vect.fit_transform(texts).toarray()
+    y = labels
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42)
 
-    # Train
-    model = LogisticRegression()
-    model.fit(X_vec, labels)
+    # Train classifier
+    clf = GaussianNB()
+    clf.fit(X_train, y_train)
 
-    # Save model + vectorizer together
-    joblib.dump((model, vectorizer), "sentiment_model.pkl")
+    # Test classifier
+    test_model(clf, X_test, y_test)
 
-    return model, vectorizer
+    # Serialize artifacts
+    version = os.getenv("MODEL_VERSION", "v0.1.0")
+    os.makedirs("artifacts", exist_ok=True)
+    vect_path = f"artifacts/vectorizer-{version}.pkl"
+    modl_path = f"artifacts/classifier-{version}.pkl"
+    joblib.dump(vect, vect_path)
+    joblib.dump(clf, modl_path)
+    print(f"Saved vectorizer → {vect_path}")
+    print(f"Saved classifier → {modl_path}")
 
 
 
-def test_model(model, vectorizer, text):
-    """
-    Test the model with a new text input.
-    """
-    # Preprocess the text
-    text_clean = clean_text(text)
-    
-    # Vectorize the text
-    text_vec = vectorizer.transform([text_clean])
-    
-    # Predict
-    prediction = model.predict(text_vec)
-    
-    return prediction[0] 
-
-# Example usage of the test_model function
 if __name__ == "__main__":
-    # Train the model
-    #model, vectorizer = train_model()
-
-    # Load the model and vectorizer
-    model, vectorizer = joblib.load("sentiment_model.pkl")
-
-
-    # Test the model with a new text input
-    test_text = "The food was amazing!"
-    prediction = test_model(model, vectorizer, test_text)
-    
-    print(f"Prediction for '{test_text}': {'Positive' if prediction == 1 else 'Negative'}")
-
+    main()
