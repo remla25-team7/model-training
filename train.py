@@ -1,54 +1,58 @@
 import os
+import pickle
 import joblib
 import pandas as pd
+from sklearn.naive_bayes import GaussianNB
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import CountVectorizer
 
 from lib_ml.preprocessing import clean_review, tokenize_review
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.model_selection import train_test_split
-from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import accuracy_score
 
-def test_model(clf, X_test, y_test):
-    """
-    Tests the accuracy of the trained model on the test set.
-    """
-    y_pred = clf.predict(X_test)
-    accuracy = accuracy_score(y_test, y_pred)
-    print(f"Model accuracy: {accuracy:.2%}")
-    return accuracy
 
-def main():
-    df = pd.read_csv("data/a1_RestaurantReviews_HistoricDump.tsv", 
-                     sep="\t", quoting=3)
-    texts = df.Review.tolist()
-    labels = df.Liked
+def train_model(
+    data_path: str,
+    vectorizer_out: str,
+    model_out: str
+):
+    # 1. Load TSV dataset
+    df = pd.read_csv(data_path, delimiter='\t', quoting=3)
+    reviews = df['Review'].tolist()
+    labels = df['Liked'].values
 
-    # Build vectorizer & train-test split
-    vect = CountVectorizer(preprocessor=clean_review,
-                           tokenizer=tokenize_review)
-    X = vect.fit_transform(texts).toarray()
-    y = labels
+    # 2. Build CountVectorizer with our preprocessing
+    cv = CountVectorizer(
+        tokenizer=tokenize_review,
+        preprocessor=clean_review,
+        max_features=1420
+    )
+    X = cv.fit_transform(reviews).toarray()
+
+    # 3. Split into train/test
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42)
+        X, labels, test_size=0.2, random_state=0
+    )
 
-    # Train classifier
+    # 4. Train Gaussian Naive Bayes
     clf = GaussianNB()
     clf.fit(X_train, y_train)
 
-    # Test classifier
-    test_model(clf, X_test, y_test)
+    # 5. Evaluate
+    acc = clf.score(X_test, y_test)
+    print(f"Test accuracy: {acc:.4f}")
 
-    # Serialize artifacts
-    version = os.getenv("MODEL_VERSION", "v0.1.0")
-    os.makedirs("artifacts", exist_ok=True)
-    vect_path = f"artifacts/vectorizer-{version}.pkl"
-    modl_path = f"artifacts/classifier-{version}.pkl"
-    joblib.dump(vect, vect_path)
-    joblib.dump(clf, modl_path)
-    print(f"Saved vectorizer → {vect_path}")
-    print(f"Saved classifier → {modl_path}")
+    # 6. Save artifacts
+    os.makedirs(os.path.dirname(vectorizer_out), exist_ok=True)
+    pickle.dump(cv, open(vectorizer_out, 'wb'))
+    joblib.dump(clf, model_out)
+    print(f"Saved vectorizer to {vectorizer_out}")
+    print(f"Saved classifier to {model_out}")
 
 
-
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    import argparse
+    p = argparse.ArgumentParser()
+    p.add_argument('--data', default='data/a1_RestaurantReviews_HistoricDump.tsv')
+    p.add_argument('--vec_out', default='models/vectorizer.pkl')
+    p.add_argument('--model_out', default='models/classifier.joblib')
+    args = p.parse_args()
+    train_model(args.data, args.vec_out, args.model_out)

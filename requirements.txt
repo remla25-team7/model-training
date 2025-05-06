@@ -1,4 +1,4 @@
+lib-ml @ git+https://github.com/your-org/lib-ml.git@v0.1.0
+scikit-learn
 pandas
-joblib==1.5.0
-scikit-learn==1.6.1
-lib-ml @ git+https://github.com/remla25-team7/lib-ml.git@v0.1.1
+joblib
