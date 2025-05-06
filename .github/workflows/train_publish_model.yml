@@ -56,3 +56,4 @@ jobs:
           asset_path: models.tar.gz
           asset_name: models.tar.gz
           asset_content_type: application/gzip
+          token: ${{ secrets.GITHUB_TOKEN }}
