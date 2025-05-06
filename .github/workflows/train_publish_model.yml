@@ -1,23 +1,22 @@
-name: Train and Publish Model
+name: Train & Release Model
 
 on:
   push:
-    branches:
-      - main
     tags:
-      - 'v*.*.*'
+      - '*.*.*'     
 
 permissions:
-  contents: write   
-  packages: write  
+  contents: write    
 
 jobs:
-  train:
+  train_and_release:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -27,33 +26,57 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install .            # installs your model-training package
+          pip install lib-ml lib-version  # if you need to fetch your preprocessing & versioning packages
 
-      - name: Run training
+      - name: Make artifacts directory
+        run: mkdir -p artifacts
+
+      - name: Train model & emit URL
         run: |
-          python train.py \
-            --data data/a1_RestaurantReviews_HistoricDump.tsv \
-            --vec_out models/vectorizer.pkl \
-            --model_out models/classifier.joblib
+          python - <<EOF
+            import os
+            from train import train_model  # adjust import path to your entrypoint
+            url = train_model(
+                data_path="data/reviews.tsv",        # adjust path if needed
+                vectorizer_out="artifacts/vectorizer.pkl",
+                model_out="artifacts/model.pkl"
+            )
+            print(f"::set-output name=model_url::{url}")
+            EOF
+        id: train
 
-      - name: Archive model artifacts
-        run: |
-          tar czf models.tar.gz models
-
-      - name: Create Release
+      - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref_name }}
-          release_name: "Model artifacts ${{ github.ref_name }}"
+          release_name: ${{ github.ref_name }}
+          body: |
+            Automated model build for version ${{ github.ref_name }}.
+            Download artifacts below.
 
-      - name: Upload model artifact
+      - name: Upload Vectorizer
         uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: models.tar.gz
-          asset_name: models.tar.gz
-          asset_content_type: application/gzip
-          token: ${{ secrets.GITHUB_TOKEN }}
+          asset_path: artifacts/vectorizer.pkl
+          asset_name: vectorizer.pkl
+          asset_content_type: application/octet-stream
+
+      - name: Upload Model
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artifacts/model.pkl
+          asset_name: model.pkl
+          asset_content_type: application/octet-stream
+
+      - name: Output model URL
+        run: echo "Model URL = ${{ steps.train.outputs.model_url }}"
