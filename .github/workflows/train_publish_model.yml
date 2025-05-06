@@ -26,8 +26,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install .            # installs your model-training package
-          pip install lib-ml lib-version  # if you need to fetch your preprocessing & versioning packages
+          pip install -r requirements.txt
 
       - name: Make artifacts directory
         run: mkdir -p artifacts
