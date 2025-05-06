@@ -29,6 +29,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python train.py \
-            --data data/reviews.tsv \
+            --data data/a1_RestaurantReviews_HistoricDump.tsv \
             --vectorizer artifacts/vectorizer.pkl \
             --model artifacts/model.pkl
