@@ -34,9 +34,6 @@ jobs:
             --vectorizer "$VEC_FILE" \
             --model "$MODEL_FILE"
 
-      - uses: cli/cli@v2      
-        with: { install-dir: /usr/local/bin }
-
       - name: Publish artefacts to GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
