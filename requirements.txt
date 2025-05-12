@@ -1,4 +1,4 @@
-lib-ml @ git+https://github.com/remla25-team7/lib-ml.git@v0.1.0-test
+remla25-team7-lib-ml
 scikit-learn
 pandas
 joblib

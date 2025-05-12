@@ -1,59 +1,51 @@
-name: Train and Publish Model
+name: Train & Release Model
 
 on:
   push:
-    branches:
-      - main
-    tags:
-      - 'v*.*.*'
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']      
 
 permissions:
-  contents: write   
-  packages: write  
+  contents: write                       
 
 jobs:
-  train:
+  train-and-release:
     runs-on: ubuntu-latest
 
+    env:
+      DATA_FILE: data/a1_RestaurantReviews_HistoricDump.tsv
+      VEC_FILE:  artifacts/vectorizer.pkl
+      MODEL_FILE: artifacts/model.pkl
+      VERSION:    ${{ github.ref_name }}   
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-
-      - name: Install dependencies
-        run: |
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run training
+      - name: Train model
         run: |
           python train.py \
-            --data data/a1_RestaurantReviews_HistoricDump.tsv \
-            --vec_out models/vectorizer.pkl \
-            --model_out models/classifier.joblib
+            --data "$DATA_FILE" \
+            --vectorizer "$VEC_FILE" \
+            --model "$MODEL_FILE"
 
-      - name: Archive model artifacts
-        run: |
-          tar czf models.tar.gz models
-
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Publish artefacts to GitHub Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}
-          release_name: "Model artifacts ${{ github.ref_name }}"
-
-      - name: Upload model artifact
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: models.tar.gz
-          asset_name: models.tar.gz
-          asset_content_type: application/gzip
-          token: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # create release if it doesn't exist
+          gh release view "$VERSION" >/dev/null 2>&1 || \
+          gh release create "$VERSION" --title "$VERSION" --notes \
+            "Automated model build for $VERSION"
+          
+          # upload (overwrite if already there)
+          gh release upload "$VERSION" "$VEC_FILE" "$MODEL_FILE" --clobber
+          
+          BASE_URL="https://github.com/${{ github.repository }}/releases/download/${VERSION}"
+          echo "Vectorizer URL: ${BASE_URL}/$(basename "$VEC_FILE")"
+          echo "Model URL:      ${BASE_URL}/$(basename "$MODEL_FILE")"
