@@ -1,4 +1,4 @@
-remla25-team7-lib-ml==0.3.1
+remla25-team7-lib-ml
 scikit-learn
 pandas
 joblib
