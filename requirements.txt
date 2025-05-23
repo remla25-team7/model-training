@@ -2,3 +2,4 @@ remla25-team7-lib-ml
 scikit-learn
 pandas
 joblib
+requests
