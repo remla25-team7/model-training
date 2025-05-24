@@ -1,0 +1,72 @@
+schema: '2.0'
+stages:
+  data_prep:
+    cmd: python src/data_prep.py
+    deps:
+    - path: src/data_prep.py
+      hash: md5
+      md5: 47022b0d947ede11f3f9819666dea590
+      size: 1996
+    outs:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 45011a6f01e12424f778380e91100637
+      size: 10990
+    - path: data/processed/train.csv
+      hash: md5
+      md5: 42bde09c2e9a66f011f84dc299029d73
+      size: 44307
+    - path: data/raw/reviews.tsv
+      hash: md5
+      md5: 102f1f4193e0bdebdd6cce7f13e0a839
+      size: 54686
+  train_model:
+    cmd: python src/train.py --data data/processed/train.csv --model models/model.pkl
+      --vectorizer output/preprocessor.joblib
+    deps:
+    - path: data/processed/train.csv
+      hash: md5
+      md5: 42bde09c2e9a66f011f84dc299029d73
+      size: 44307
+    - path: src/train.py
+      hash: md5
+      md5: 7b420559b0e641c5a14bb3f5287fb4fa
+      size: 1466
+    outs:
+    - path: models/model.pkl
+      hash: md5
+      md5: 2aa11d1f87194bb425a65afa3487eea9
+      size: 36843
+    - path: output/preprocessor.joblib
+      hash: md5
+      md5: 14f4186056a65e686a9d9f7bb1bd4ba4
+      size: 177159
+    - path: output/train_metrics.json
+      hash: md5
+      md5: 1d9c896cfd0962684cb4572bf57da123
+      size: 38
+  evaluate_model:
+    cmd: python src/evaluate.py --model models/model.pkl --vectorizer output/preprocessor.joblib
+      --test-data data/processed/test.csv
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 45011a6f01e12424f778380e91100637
+      size: 10990
+    - path: models/model.pkl
+      hash: md5
+      md5: 2aa11d1f87194bb425a65afa3487eea9
+      size: 36843
+    - path: output/preprocessor.joblib
+      hash: md5
+      md5: 14f4186056a65e686a9d9f7bb1bd4ba4
+      size: 177159
+    - path: src/evaluate.py
+      hash: md5
+      md5: 0b0ea496dfb256c75fbc9411b4cd0530
+      size: 1409
+    outs:
+    - path: output/metrics.json
+      hash: md5
+      md5: 209a67d2bbbe1d1fcae93d6b237f1482
+      size: 58

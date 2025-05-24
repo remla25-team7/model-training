@@ -1,6 +1,7 @@
 import argparse
 import pandas as pd
 import joblib
+import json
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 
 def evaluate(model_path: str, vectorizer_path: str, test_data_path: str) -> None:
@@ -23,6 +24,12 @@ def evaluate(model_path: str, vectorizer_path: str, test_data_path: str) -> None
 
     print(f"Accuracy: {acc:.4f}")
     print(f"F1 score: {f1:.4f}")
+    
+    with open("output/metrics.json", "w") as f:
+        json.dump({
+            "accuracy": acc,
+            "f1": f1
+        }, f)
 
 
 if __name__ == "__main__":
