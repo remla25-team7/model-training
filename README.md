@@ -21,6 +21,34 @@ This repository contains the data-prep, training, and evaluation stages for a si
    ````
 ---
 
+3. **Reproducing and Rolling back the Pipeline**
+
+   1. Follow the Cloud Remote Setup described bellow
+   2. dvc repro
+   3. To roll back to a previous version of the pipeline:
+      git checkout <commit-hash>
+      dvc checkout
+   4. To see the current metrics: dvc metrics show
+   5. Compare metrics across experiments: dvc exp show
+
+## Cloud Remote Setup (Google Drive)
+   This project uses a cloud-based remote on Google Drive to store data files and model artifacts using DVC.
+
+   If using a service account:
+
+   Ensure that the service account key file (.json) is downloaded from the Google Cloud Console.
+
+   Share the target Google Drive folder with the service account’s email (visible under "client_email" in the JSON file).
+
+   Configure DVC to use the service account by running:
+   ```bash
+   dvc remote modify myremote gdrive_use_service_account true  
+   dvc remote modify myremote gdrive_service_account_json_file_path /absolute/path/to/your-key.json
+   ````
+   dvc pull   # Download data/models from Google Drive
+   dvc push   # Upload new data/models to Google Drive
+
+
 ## Running the pipeline locally
 
 All pipeline code lives under `src/`. By default we download data into `data/raw/` and write processed splits into `data/processed/`, and artifacts into `artifacts/`.
