@@ -4,3 +4,7 @@ venv/
 data/raw/
 data/processed/
 artifacts/
+# Allow DVC tracking files
+!data/raw/*.dvc
+!data/processed/*.dvc
+!artifacts/*.dvc
