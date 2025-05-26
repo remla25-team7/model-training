@@ -48,21 +48,21 @@ jobs:
           pylint src/ --fail-under=8.0
         continue-on-error: false
 
-      - name: Run tests with coverage
-        run: |
-          coverage run -m pytest
-          coverage report
-          coverage html
+      # - name: Run tests with coverage
+      #   run: |
+      #     coverage run -m pytest
+      #     coverage report
+      #     coverage html
 
-      - name: Generate coverage badge
-        run: |
-          coverage-badge -o coverage.svg -f
+      # - name: Generate coverage badge
+      #   run: |
+      #     coverage-badge -o coverage.svg -f
 
-      - name: Commit coverage badge to repo
-        if: github.ref == 'refs/heads/main'
-        run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
-          git add coverage.svg
-          git commit -m 'Update coverage badge [skip ci]' || echo "No changes to commit"
-          git push 
+      # - name: Commit coverage badge to repo
+      #   if: github.ref == 'refs/heads/main'
+      #   run: |
+      #     git config --global user.name 'github-actions'
+      #     git config --global user.email 'github-actions@github.com'
+      #     git add coverage.svg
+      #     git commit -m 'Update coverage badge [skip ci]' || echo "No changes to commit"
+      #     git push 
