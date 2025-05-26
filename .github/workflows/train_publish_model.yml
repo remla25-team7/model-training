@@ -71,7 +71,13 @@ jobs:
         run: |
           coverage-badge -o coverage.svg -f
 
-
+      - name: Commit coverage badge to repo
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git add coverage.svg
+          git commit -m 'Update coverage badge [skip ci]' || echo "No changes to commit"
+          git push
 
       - name: Publish artifacts to GitHub Release
         env:
