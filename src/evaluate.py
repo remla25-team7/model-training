@@ -1,4 +1,4 @@
-"""Evaluation script for sentiment model."""
+"""Evaluation script for sentiment model. """
 
 import json
 import argparse

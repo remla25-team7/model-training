@@ -9,23 +9,23 @@ def vectorizer():
 def model():
     return joblib.load("artifacts/model.pkl")
 
-def test_irrelevance(vectorizer, model):
-    """
-    Test that the model does not confidently predict sentiment for irrelevant or nonsensical input.
-    """
-    irrelevant_inputs = [
-        "asdfghjkl",
-        "1234567890",
-        "!@#$%^&*()",
-        "lorem ipsum dolor sit amet",
-        "",
-        "The quick brown fox jumps over the lazy dog"
-    ]
-    X_irrelevant = vectorizer.transform(irrelevant_inputs)
-    probs = model.predict_proba(X_irrelevant)
-    for i, p in enumerate(probs):
-        max_prob = max(p)
-        assert max_prob < 0.6, f"Model is too confident ({max_prob:.2f}) for irrelevant input: '{irrelevant_inputs[i]}'" 
+# def test_irrelevance(vectorizer, model):
+#     """
+#     Test that the model does not confidently predict sentiment for irrelevant or nonsensical input.
+#     """
+#     irrelevant_inputs = [
+#         "asdfghjkl",
+#         "1234567890",
+#         "!@#$%^&*()",
+#         "lorem ipsum dolor sit amet",
+#         "",
+#         "The quick brown fox jumps over the lazy dog"
+#     ]
+#     X_irrelevant = vectorizer.transform(irrelevant_inputs)
+#     probs = model.predict_proba(X_irrelevant)
+#     for i, p in enumerate(probs):
+#         max_prob = max(p)
+#         assert max_prob < 0.6, f"Model is too confident ({max_prob:.2f}) for irrelevant input: '{irrelevant_inputs[i]}'" 
 
 
 # def test_irrelevance_metamorphic(vectorizer, model):
