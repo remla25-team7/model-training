@@ -2,6 +2,7 @@ import os
 import argparse
 import joblib
 import pandas as pd
+import json
 from sklearn.linear_model    import LogisticRegression
 from sklearn.feature_extraction.text import TfidfVectorizer
 from lib_ml.preprocessing    import clean_review, tokenize_review
@@ -35,6 +36,11 @@ def train_and_save(
     joblib.dump(vec, vec_out)
     joblib.dump(clf, model_out)
 
+    # Save training accuracy for DVC
+    
+    with open("output/train_metrics.json", "w") as f:
+        json.dump({"train_accuracy": acc}, f)
+        
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--data",      required=True)

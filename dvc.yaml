@@ -1,0 +1,32 @@
+stages:
+  data_prep:
+    cmd: python src/data_prep.py
+    deps:
+    - src/data_prep.py
+    outs:
+    - data/processed/test.csv
+    - data/processed/train.csv
+    - data/raw/reviews.tsv
+  train_model:
+    cmd: python src/train.py --data data/processed/train.csv --model models/model.pkl
+      --vectorizer output/preprocessor.joblib
+    deps:
+    - data/processed/train.csv
+    - src/train.py
+    outs:
+    - models/model.pkl
+    - output/preprocessor.joblib
+    metrics:
+    - output/train_metrics.json:
+        cache: false
+  evaluate_model:
+    cmd: python src/evaluate.py --model models/model.pkl --vectorizer output/preprocessor.joblib
+      --test-data data/processed/test.csv
+    deps:
+    - data/processed/test.csv
+    - models/model.pkl
+    - output/preprocessor.joblib
+    - src/evaluate.py
+    metrics:
+    - output/metrics.json:
+        cache: false

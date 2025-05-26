@@ -1,0 +1,8 @@
+[core]
+    analytics = false
+    autostage = true
+    remote = myremote
+['remote "myremote"']
+    url = gdrive://1XeB-PlDZXOJWW89yBJ0WEbL4UZwub2I6
+    gdrive_use_service_account = true
+    gdrive_service_account_json_file_path = /Users/andreaonofrei/Downloads/dvc-service-account.json

@@ -1,7 +1,8 @@
 import argparse
 import pandas as pd
 import joblib
-from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
+import json
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, precision_score, recall_score
 
 def evaluate(model_path: str, vectorizer_path: str, test_data_path: str) -> None:
     # Load artifacts
@@ -21,8 +22,21 @@ def evaluate(model_path: str, vectorizer_path: str, test_data_path: str) -> None
     acc    = accuracy_score(y_true, y_pred)
     f1     = f1_score(y_true, y_pred)
 
+    precision = precision_score(y_true, y_pred)
+    recall = recall_score(y_true, y_pred)
+    roc_auc = roc_auc_score(y_true, clf.predict_proba(X_test)[:,1])
+
     print(f"Accuracy: {acc:.4f}")
     print(f"F1 score: {f1:.4f}")
+    
+    with open("output/metrics.json", "w") as f:
+        json.dump({
+            "accuracy": acc,
+            "f1": f1,
+            "precision": precision,
+            "recall": recall,
+            "roc_auc": roc_auc
+    }, f)
 
 
 if __name__ == "__main__":
