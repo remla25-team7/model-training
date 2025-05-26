@@ -2,7 +2,14 @@ name: Data-Prep - Train - Evaluate - Release
 
 on:
   push:
-    tags: ['v[0-9]+.[0-9]+.[0-9]+']      
+    branches:
+      - main
+      - '**'
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -35,7 +42,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Install test/lint dependencies
-        run: pip install pytest pylint coverage
+        run: pip install pytest pylint coverage coverage-badge
 
       - name: Lint with pylint
         run: |
@@ -43,14 +50,15 @@ jobs:
           SCORE=$(tail -n 2 pylint.log | grep 'Your code has been rated at' | sed -E 's/.*rated at ([0-9\.]+)\/10.*/\1/')
           echo "Pylint score: $SCORE"
           echo $SCORE > pylint_score.txt
-      
+
       - name: Generate pylint badge
+        if: startsWith(github.ref, 'refs/tags/')
         run: |
-         SCORE=$(cat pylint_score.txt)
-         COLOR="brightgreen"
-         if (( $(echo "$SCORE < 9.0" | bc -l) )); then COLOR="yellow"; fi
-         if (( $(echo "$SCORE < 7.0" | bc -l) )); then COLOR="red"; fi
-         echo "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"150\" height=\"20\"><rect width=\"150\" height=\"20\" fill=\"gray\"/><rect x=\"70\" width=\"80\" height=\"20\" fill=\"$COLOR\"/><text x=\"10\" y=\"14\" fill=\"white\" font-family=\"Verdana\" font-size=\"12\">pylint</text><text x=\"75\" y=\"14\" fill=\"white\" font-family=\"Verdana\" font-size=\"12\">$SCORE/10</text></svg>" > pylint.svg
+          SCORE=$(cat pylint_score.txt)
+          COLOR="brightgreen"
+          if (( $(echo "$SCORE < 9.0" | bc -l) )); then COLOR="yellow"; fi
+          if (( $(echo "$SCORE < 7.0" | bc -l) )); then COLOR="red"; fi
+          echo "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"150\" height=\"20\"><rect width=\"150\" height=\"20\" fill=\"gray\"/><rect x=\"70\" width=\"80\" height=\"20\" fill=\"$COLOR\"/><text x=\"10\" y=\"14\" fill=\"white\" font-family=\"Verdana\" font-size=\"12\">pylint</text><text x=\"75\" y=\"14\" fill=\"white\" font-family=\"Verdana\" font-size=\"12\">$SCORE/10</text></svg>" > pylint.svg
 
       - name: Prepare data
         run: |
@@ -78,12 +86,13 @@ jobs:
           coverage run -m pytest
           coverage report
 
-
       - name: Generate coverage badge
+        if: startsWith(github.ref, 'refs/tags/')
         run: |
           coverage-badge -o coverage.svg -f
 
-      - name: Commit coverage badge to badge-badges branch
+      - name: Commit coverage and pylint badges to badge-badges branch
+        if: startsWith(github.ref, 'refs/tags/')
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
@@ -102,9 +111,8 @@ jobs:
           git commit -m 'Update coverage and pylint badges [skip ci]' || echo "No changes to commit"
           git push origin badge-badges
 
-
-
       - name: Publish artifacts to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
