@@ -34,6 +34,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Install test/lint dependencies
+        run: pip install pytest pylint coverage
+
+      - name: Lint with pylint
+        run: pylint src/
+
+      - name: Run tests with coverage
+        run: |
+          coverage run -m pytest
+          coverage report
+
       - name: Prepare data
         run: |
           python src/data_prep.py \
