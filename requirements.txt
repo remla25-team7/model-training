@@ -7,4 +7,5 @@ dvc
 dvc[gdrive]
 pytest
 pylint
-coverage
+coverage 
+coverage-badge
