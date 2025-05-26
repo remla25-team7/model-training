@@ -38,7 +38,19 @@ jobs:
         run: pip install pytest pylint coverage
 
       - name: Lint with pylint
-        run: pylint src/
+        run: |
+          pylint src/ | tee pylint.log
+          SCORE=$(tail -n 2 pylint.log | grep 'Your code has been rated at' | sed -E 's/.*rated at ([0-9\.]+)\/10.*/\1/')
+          echo "Pylint score: $SCORE"
+          echo $SCORE > pylint_score.txt
+      
+      - name: Generate pylint badge
+        run: |
+         SCORE=$(cat pylint_score.txt)
+         COLOR="brightgreen"
+         if (( $(echo "$SCORE < 9.0" | bc -l) )); then COLOR="yellow"; fi
+         if (( $(echo "$SCORE < 7.0" | bc -l) )); then COLOR="red"; fi
+         echo "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"150\" height=\"20\"><rect width=\"150\" height=\"20\" fill=\"gray\"/><rect x=\"70\" width=\"80\" height=\"20\" fill=\"$COLOR\"/><text x=\"10\" y=\"14\" fill=\"white\" font-family=\"Verdana\" font-size=\"12\">pylint</text><text x=\"75\" y=\"14\" fill=\"white\" font-family=\"Verdana\" font-size=\"12\">$SCORE/10</text></svg>" > pylint.svg
 
       - name: Prepare data
         run: |
@@ -78,12 +90,18 @@ jobs:
           git fetch origin
           # Create a worktree for the badge branch
           git worktree add ../badge-badges badge-badges || git worktree add ../badge-badges -b badge-badges origin/badge-badges
-          rm -f ../badge-badges/coverage.svg  # Delete old badge if it exists
+          # Remove old badge files if they exist
+          rm -f ../badge-badges/coverage.svg
+          rm -f ../badge-badges/pylint.svg
+          # Copy new badge files
           cp coverage.svg ../badge-badges/coverage.svg
+          cp pylint.svg ../badge-badges/pylint.svg
+          # Commit and push
           cd ../badge-badges
-          git add coverage.svg
-          git commit -m 'Update coverage badge [skip ci]' || echo "No changes to commit"
+          git add coverage.svg pylint.svg
+          git commit -m 'Update coverage and pylint badges [skip ci]' || echo "No changes to commit"
           git push origin badge-badges
+
 
 
       - name: Publish artifacts to GitHub Release

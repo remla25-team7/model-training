@@ -122,6 +122,17 @@ Then visit the **Actions** tab in GitHub to watch the workflow. When it succeeds
 ## Test Coverage
 
 ![coverage](https://github.com/remla25-team7/model-training/blob/badge-badges/coverage.svg)
+![Pylint Score](https://img.shields.io/badge/pylint-8.57/10-brightgreen)
+![Test Adequacy](https://img.shields.io/badge/tests-ML_Test_Score_Complete-blue)
+
+
+### ✅ ML Test Score Areas Covered
+
+- [x] Feature/Data Integrity
+- [x] Model Development
+- [x] ML Infrastructure
+- [x] Monitoring
+- [x] Metamorphic Testing (Synonym, Negation, Typos, Irrelevance)
 
 To check coverage locally:
 

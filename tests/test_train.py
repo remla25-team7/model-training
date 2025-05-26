@@ -1,3 +1,4 @@
+#Smoke-test for train.py
 def test_train_runs():
     import subprocess
     result = subprocess.run(
