@@ -78,6 +78,7 @@ jobs:
           git fetch origin
           # Create a worktree for the badge branch
           git worktree add ../badge-badges badge-badges || git worktree add ../badge-badges -b badge-badges origin/badge-badges
+          rm -f ../badge-badges/coverage.svg  # Delete old badge if it exists
           cp coverage.svg ../badge-badges/coverage.svg
           cd ../badge-badges
           git add coverage.svg
