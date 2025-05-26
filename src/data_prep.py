@@ -1,3 +1,5 @@
+"""Data preparation script for sentiment model. Downloads, splits, and validates data."""
+
 import os
 import argparse
 import requests
@@ -12,8 +14,9 @@ RAW_URL = (
 
 
 def download_data(url: str, out_path: str) -> None:
+    """Download data from a URL and save to out_path."""
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    resp = requests.get(url)
+    resp = requests.get(url, timeout=30)
     resp.raise_for_status()
     with open(out_path, "wb") as f:
         f.write(resp.content)
@@ -27,11 +30,11 @@ def split_data(
     test_size: float = 0.2,
     random_state: int = 0,
 ) -> None:
-    
+    """Split raw data into train and test sets and save as CSV."""
     try:
         df = pd.read_csv(raw_path, sep="\t", quoting=3)
     except Exception as e:
-        raise RuntimeError(f"Failed to read TSV at {raw_path}: {e}")
+        raise RuntimeError(f"Failed to read TSV at {raw_path}: {e}") from e
 
     expected = {"Review", "Liked"}
     if not expected.issubset(df.columns):
@@ -42,12 +45,13 @@ def split_data(
     )
     os.makedirs(os.path.dirname(train_out), exist_ok=True)
     os.makedirs(os.path.dirname(test_out), exist_ok=True)
-    train.to_csv(train_out, index=False)
-    test.to_csv(test_out,   index=False)
+    train.to_csv(train_out, index=False, encoding="utf-8")
+    test.to_csv(test_out,   index=False, encoding="utf-8")
     print(f"Wrote {len(train)} train / {len(test)} test samples")
 
 def main():
-    p = argparse.ArgumentParser()
+    """Download and split data for sentiment analysis."""
+    p = argparse.ArgumentParser(description="Download and split restaurant review data.")
     p.add_argument(
         "--raw-out", default="data/raw/reviews.tsv",
         help="where to save the downloaded TSV"
