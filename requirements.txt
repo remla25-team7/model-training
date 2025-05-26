@@ -5,3 +5,7 @@ joblib
 requests
 dvc
 dvc[gdrive]
+pytest
+pylint
+coverage 
+coverage-badge

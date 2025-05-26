@@ -34,6 +34,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Install test/lint dependencies
+        run: pip install pytest pylint coverage
+
+      - name: Lint with pylint
+        run: pylint src/
+
       - name: Prepare data
         run: |
           python src/data_prep.py \
@@ -54,6 +60,31 @@ jobs:
             --model      "${{ env.MODEL_FILE }}" \
             --vectorizer "${{ env.VEC_FILE }}" \
             --test-data  "${{ env.TEST_CSV }}"
+
+      - name: Run tests with coverage
+        run: |
+          coverage run -m pytest
+          coverage report
+
+
+      - name: Generate coverage badge
+        run: |
+          coverage-badge -o coverage.svg -f
+
+      - name: Commit coverage badge to badge-badges branch
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git fetch origin
+          # Create a worktree for the badge branch
+          git worktree add ../badge-badges badge-badges || git worktree add ../badge-badges -b badge-badges origin/badge-badges
+          rm -f ../badge-badges/coverage.svg  # Delete old badge if it exists
+          cp coverage.svg ../badge-badges/coverage.svg
+          cd ../badge-badges
+          git add coverage.svg
+          git commit -m 'Update coverage badge [skip ci]' || echo "No changes to commit"
+          git push origin badge-badges
+
 
       - name: Publish artifacts to GitHub Release
         env:

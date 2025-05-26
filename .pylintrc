@@ -1,0 +1,7 @@
+[MESSAGES CONTROL]
+disable=
+    C0114,  # missing-module-docstring
+    R0914,  # too-many-locals
+    C0303   
+[FORMAT]
+max-line-length=100 
