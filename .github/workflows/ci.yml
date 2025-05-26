@@ -25,6 +25,14 @@ jobs:
           pip install -r requirements.txt
           pip install coverage coverage-badge pylint
 
+      - name: Prepare data
+        run: |
+          python src/data_prep.py --raw-out data/raw/reviews.tsv --train-out data/processed/train.csv --test-out data/processed/test.csv
+
+      - name: Train model
+        run: |
+          python src/train.py --data data/processed/train.csv --vectorizer artifacts/vectorizer.pkl --model artifacts/model.pkl
+
       - name: Lint with pylint
         run: |
           pylint src/ --fail-under=8.0
