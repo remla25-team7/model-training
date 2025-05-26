@@ -71,14 +71,16 @@ jobs:
         run: |
           coverage-badge -o coverage.svg -f
 
-      - name: Commit coverage badge to repo
-        if: startsWith(github.ref, 'refs/heads/')
+      - name: Commit coverage badge to badge branch
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
+          git fetch origin badge-badges || git branch badge-badges
+          git checkout badge-badges || git checkout -b badge-badges
+          cp coverage.svg coverage.svg
           git add coverage.svg
           git commit -m 'Update coverage badge [skip ci]' || echo "No changes to commit"
-          git push origin HEAD:${GITHUB_REF_NAME}
+          git push origin badge-badges
 
       - name: Publish artifacts to GitHub Release
         env:
