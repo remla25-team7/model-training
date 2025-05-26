@@ -1,3 +1,4 @@
+#Smoke-test evaluate.py
 def test_evaluate_runs():
     import subprocess
     result = subprocess.run(
