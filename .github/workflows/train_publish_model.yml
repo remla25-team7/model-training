@@ -66,3 +66,4 @@ jobs:
           # Upload vectorizer and model
           gh release upload "$VERSION" \
             "${{ env.VEC_FILE }}" "${{ env.MODEL_FILE }}" --clobber
+
