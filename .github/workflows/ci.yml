@@ -27,12 +27,22 @@ jobs:
 
       - name: Prepare data
         run: |
-          python src/data_prep.py --raw-out data/raw/reviews.tsv --train-out data/processed/train.csv --test-out data/processed/test.csv
-
+          python src/data_prep.py \
+              --raw-out   data/raw/a1_RestaurantReviews.tsv \
+              --train-out data/processed/train.csv \
+              --test-out  data/processed/test.csv
       - name: Train model
         run: |
-          python src/train.py --data data/processed/train.csv --vectorizer artifacts/vectorizer.pkl --model artifacts/model.pkl
-
+          python src/train.py \
+              --data       data/processed/train.csv \
+              --vectorizer artifacts/vectorizer.pkl \
+              --model      artifacts/model.pkl
+      - name: Evaluate model
+        run: |
+          python src/evaluate.py \
+              --model      artifacts/model.pkl \
+              --vectorizer artifacts/vectorizer.pkl \
+              --test-data  data/processed/test.csv
       - name: Lint with pylint
         run: |
           pylint src/ --fail-under=8.0
