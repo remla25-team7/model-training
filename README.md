@@ -122,7 +122,7 @@ Then visit the **Actions** tab in GitHub to watch the workflow. When it succeeds
 ## Test Coverage
 
 ![coverage](https://github.com/remla25-team7/model-training/blob/badge-badges/coverage.svg)
-![Pylint Score](https://img.shields.io/badge/pylint-8.57/10-brightgreen)
+![Pylint Score](https://github.com/remla25-team7/model-training/blob/badge-badges/pylint.svg)
 ![Test Adequacy](https://img.shields.io/badge/tests-ML_Test_Score_Complete-blue)
 
 
