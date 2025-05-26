@@ -77,8 +77,8 @@ jobs:
           git config --global user.email 'github-actions@github.com'
           git add coverage.svg
           git commit -m 'Update coverage badge [skip ci]' || echo "No changes to commit"
-          git push
-
+          git push origin HEAD:${GITHUB_REF_NAME}
+          
       - name: Publish artifacts to GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
