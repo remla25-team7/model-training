@@ -121,7 +121,7 @@ Then visit the **Actions** tab in GitHub to watch the workflow. When it succeeds
 
 ## Test Coverage
 
-![coverage](coverage.svg)
+![coverage](https://github.com/remla25-team7/model-training/raw/badge-badges/coverage.svg)
 
 To check coverage locally:
 
