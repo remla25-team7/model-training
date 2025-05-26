@@ -40,11 +40,6 @@ jobs:
       - name: Lint with pylint
         run: pylint src/
 
-      - name: Run tests with coverage
-        run: |
-          coverage run -m pytest
-          coverage report
-
       - name: Prepare data
         run: |
           python src/data_prep.py \
@@ -65,6 +60,18 @@ jobs:
             --model      "${{ env.MODEL_FILE }}" \
             --vectorizer "${{ env.VEC_FILE }}" \
             --test-data  "${{ env.TEST_CSV }}"
+
+      - name: Run tests with coverage
+        run: |
+          coverage run -m pytest
+          coverage report
+
+
+      - name: Generate coverage badge
+        run: |
+          coverage-badge -o coverage.svg -f
+
+
 
       - name: Publish artifacts to GitHub Release
         env:
