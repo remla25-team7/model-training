@@ -1,4 +1,4 @@
-"""Evaluation script for sentiment model. Computes metrics on test data and saves them to a JSON file."""
+"""Evaluation script for sentiment model."""
 
 import json
 import argparse
