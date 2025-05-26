@@ -5,20 +5,16 @@ import joblib
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, precision_score, recall_score
 
 def evaluate(model_path: str, vectorizer_path: str, test_data_path: str) -> None:
-    """Evaluate a trained model and save metrics to output/metrics.json."""
 
     vec = joblib.load(vectorizer_path)
     clf = joblib.load(model_path)
 
-    # Load test set
     df = pd.read_csv(test_data_path)
     reviews = df["Review"].tolist()
     y_true = df["Liked"].values
 
-    # Feature extraction
     x_test = vec.transform(reviews)
 
-    # Predictions & metrics
     y_pred = clf.predict(x_test)
     acc = accuracy_score(y_true, y_pred)
     f1 = f1_score(y_true, y_pred)
