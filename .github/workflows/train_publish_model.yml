@@ -84,6 +84,7 @@ jobs:
           git commit -m 'Update coverage badge [skip ci]' || echo "No changes to commit"
           git push origin badge-badges
 
+
       - name: Publish artifacts to GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
