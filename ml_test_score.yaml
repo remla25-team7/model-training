@@ -1,0 +1,21 @@
+data:
+  schema_validation: auto           # test_data_prep.py
+  feature_code_tested: auto         # test_data_prep.py
+
+model:
+  offline_online_metric_correlation: auto     # test_model_generalization.py
+  hyperparameter_tuning: auto                 # test_model_generalization.py
+  model_capability_check: auto                # test_model_capabilities.py
+  robustness_typo: auto                       # test_typo_robustness.py
+  robustness_negation: auto                   # test_negation_robustness.py
+  robustness_synonym: auto                    # test_synonym_robustness.py
+  robustness_irrelevant: auto                 # test_irrelevance.py
+
+infra:
+  script_runs: auto                # test_data_prep.py, test_train.py, test_evaluate.py
+  pipeline_integration_tested: auto # combination of all script tests
+
+monitoring:
+  model_staleness_check: auto      # test_model_generalization.py
+  performance_regression_monitored: auto  # test_model_performance.py
+
