@@ -123,8 +123,14 @@ Then visit the **Actions** tab in GitHub to watch the workflow. When it succeeds
 
 ![coverage](https://github.com/remla25-team7/model-training/blob/badge-badges/coverage.svg)
 ![Pylint Score](https://github.com/remla25-team7/model-training/blob/badge-badges/pylint.svg)
-![Test Adequacy](https://img.shields.io/badge/tests-ML_Test_Score_Complete-blue)
+![Test Adequacy](https://github.com/remla25-team7/model-training/blob/badge-badges/ml_test_score.svg)
 
+| ML Test Area          | Covered? | Coverage Type | Test Files Involved                                                                                                                                                                                      |
+| --------------------- | -------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Data Integrity**    | ✅ Yes    | `auto`        | `test_data_prep.py` (schema validation, input features tested)                                                                                                                                           |
+| **Model Development** | ✅ Yes    | `auto`        | `test_model_capabilities.py`, `test_model_generalization.py`, `test_model_performance.py`, `test_synonym_robustness.py`, `test_negation_robustness.py`, `test_typo_robustness.py`, `test_irrelevance.py` |
+| **ML Infrastructure** | ✅ Yes    | `auto`        | `test_data_prep.py`, `test_train.py`, `test_evaluate.py` (script run + integration)                                                                                                                      |
+| **Monitoring**        | ✅ Yes    | `auto`        | `test_model_generalization.py` (staleness), `test_model_performance.py` (performance regression)                                                                                                         |
 
 
 
