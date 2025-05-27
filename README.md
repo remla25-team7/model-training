@@ -126,15 +126,7 @@ Then visit the **Actions** tab in GitHub to watch the workflow. When it succeeds
 ![Test Adequacy](https://img.shields.io/badge/tests-ML_Test_Score_Complete-blue)
 
 
-### ✅ ML Test Score Areas Covered
 
-| Test Category                | Description                                | Test Files                                                                                                    |
-| ---------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| ✅ **Feature/Data Integrity** | Ensures input data is clean and consistent | `test_data_prep.py`                                                                                           |
-| ✅ **Model Development**      | Validates learning, accuracy, and tuning   | `test_model_capabilities.py`, `test_model_generalization.py`                                                  |
-| ✅ **ML Infrastructure**      | Confirms scripts run correctly             | `test_data_prep.py`, `test_train.py`, `test_evaluate.py`                                                      |
-| ✅ **Monitoring**             | Tracks and compares model performance      | `test_model_generalization.py`, `test_model_performance.py`                                                                             |
-| ✅ **Metamorphic Testing**    | Tests model robustness to variations       | `test_synonym_robustness.py`, `test_negation_robustness.py`, `test_typo_robustness.py`, `test_irrelevance.py` |
 
 
 To check coverage locally:

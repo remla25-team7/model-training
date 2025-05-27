@@ -42,7 +42,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Install test/lint dependencies
-        run: pip install pytest pylint coverage coverage-badge
+        run: pip install pytest pylint coverage coverage-badge pyyaml
 
       - name: Lint with pylint
         run: |
@@ -58,7 +58,12 @@ jobs:
           COLOR="brightgreen"
           if (( $(echo "$SCORE < 9.0" | bc -l) )); then COLOR="yellow"; fi
           if (( $(echo "$SCORE < 7.0" | bc -l) )); then COLOR="red"; fi
-          echo "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"150\" height=\"20\"><rect width=\"150\" height=\"20\" fill=\"gray\"/><rect x=\"70\" width=\"80\" height=\"20\" fill=\"$COLOR\"/><text x=\"10\" y=\"14\" fill=\"white\" font-family=\"Verdana\" font-size=\"12\">pylint</text><text x=\"75\" y=\"14\" fill=\"white\" font-family=\"Verdana\" font-size=\"12\">$SCORE/10</text></svg>" > pylint.svg
+          echo "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"150\" height=\"20\">
+            <rect width=\"150\" height=\"20\" fill=\"gray\"/>
+            <rect x=\"70\" width=\"80\" height=\"20\" fill=\"$COLOR\"/>
+            <text x=\"10\" y=\"14\" fill=\"white\" font-family=\"Verdana\" font-size=\"12\">pylint</text>
+            <text x=\"75\" y=\"14\" fill=\"white\" font-family=\"Verdana\" font-size=\"12\">$SCORE/10</text>
+          </svg>" > pylint.svg
 
       - name: Prepare data
         run: |
@@ -81,34 +86,47 @@ jobs:
             --vectorizer "${{ env.VEC_FILE }}" \
             --test-data  "${{ env.TEST_CSV }}"
 
-      - name: Run tests with coverage
+      - name: Run tests and calculate ML Test Score
         run: |
           coverage run -m pytest
           coverage report
+          python tests/calculate_ml_score.py
 
       - name: Generate coverage badge
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           coverage-badge -o coverage.svg -f
 
-      - name: Commit coverage and pylint badges to badge-badges branch
+      - name: Generate ML Test Score badge
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          SCORE=$(cat ml_test_score.txt)
+          COLOR="brightgreen"
+          if (( $(echo "$SCORE < 5.0" | bc -l) )); then COLOR="yellow"; fi
+          if (( $(echo "$SCORE < 3.0" | bc -l) )); then COLOR="red"; fi
+          echo "<svg xmlns='http://www.w3.org/2000/svg' width='150' height='20'>
+            <rect width='150' height='20' fill='gray'/>
+            <rect x='70' width='80' height='20' fill='$COLOR'/>
+            <text x='10' y='14' fill='white' font-family='Verdana' font-size='12'>ML Test</text>
+            <text x='75' y='14' fill='white' font-family='Verdana' font-size='12'>$SCORE</text>
+          </svg>" > ml_test_score.svg
+
+      - name: Commit coverage, pylint, and ML Test badges to badge-badges branch
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
           git fetch origin
-          # Create a worktree for the badge branch
           git worktree add ../badge-badges badge-badges || git worktree add ../badge-badges -b badge-badges origin/badge-badges
-          # Remove old badge files if they exist
           rm -f ../badge-badges/coverage.svg
           rm -f ../badge-badges/pylint.svg
-          # Copy new badge files
+          rm -f ../badge-badges/ml_test_score.svg
           cp coverage.svg ../badge-badges/coverage.svg
           cp pylint.svg ../badge-badges/pylint.svg
-          # Commit and push
+          cp ml_test_score.svg ../badge-badges/ml_test_score.svg
           cd ../badge-badges
-          git add coverage.svg pylint.svg
-          git commit -m 'Update coverage and pylint badges [skip ci]' || echo "No changes to commit"
+          git add coverage.svg pylint.svg ml_test_score.svg
+          git commit -m 'Update coverage, pylint, and ML Test Score badges [skip ci]' || echo "No changes to commit"
           git push origin badge-badges
 
       - name: Publish artifacts to GitHub Release
@@ -116,10 +134,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Create or view the release
           gh release view "$VERSION" >/dev/null 2>&1 || \
             gh release create "$VERSION" --title "$VERSION" --notes \
               "Automated build for $VERSION"
-          # Upload vectorizer and model
           gh release upload "$VERSION" \
             "${{ env.VEC_FILE }}" "${{ env.MODEL_FILE }}" --clobber
