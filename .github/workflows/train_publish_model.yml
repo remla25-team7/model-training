@@ -55,19 +55,14 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           SCORE=$(cat pylint_score.txt)
-          if (( $(echo "$SCORE >= 9.0" | bc -l) )); then
-            COLOR="brightgreen"
-          elif (( $(echo "$SCORE >= 7.0" | bc -l) )); then
-            COLOR="yellow"
-          else
-            COLOR="red"
-          fi
-      
+          COLOR="brightgreen"
+          if (( $(echo "$SCORE < 9.0" | bc -l) )); then COLOR="yellow"; fi
+          if (( $(echo "$SCORE < 5.0" | bc -l) )); then COLOR="red"; fi
           echo "<svg xmlns='http://www.w3.org/2000/svg' width='150' height='20'>
-            <rect width='70' height='20' fill='gray'/>
+            <rect width='150' height='20' fill='gray'/>
             <rect x='70' width='80' height='20' fill='$COLOR'/>
-            <text x='10' y='14' fill='white' font-family='Verdana' font-size='12'>pylint</text>
-            <text x='75' y='14' fill='white' font-family='Verdana' font-size='12'>$SCORE/10</text>
+            <text x='10' y='14' fill='white' font-family='Verdana' font-size='12'>ML Test</text>
+            <text x='75' y='14' fill='white' font-family='Verdana' font-size='12'>$SCORE</text>
           </svg>" > pylint.svg
 
       - name: Prepare data
