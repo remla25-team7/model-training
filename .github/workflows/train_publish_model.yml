@@ -74,13 +74,21 @@ jobs:
           dvc config --local remote.myremote.gdrive_service_account_json_file_path service-account.json
 
       - name: Pull DVC data
-        run: dvc pull
+        run: |
+          # Create artifacts directory if it doesn't exist
+          mkdir -p artifacts
+          # Pull only the data files, ignore missing model files
+          dvc pull data/raw/reviews.tsv data/processed/test.csv data/processed/train.csv || true
 
       - name: Run DVC pipeline
-        run: dvc repro
+        run: |
+          # Run the pipeline to generate model files
+          dvc repro
 
       - name: Push DVC changes
-        run: dvc push
+        run: |
+          # Push all files including the newly generated ones
+          dvc push
 
       - name: Run tests and calculate ML Test Score
         run: |
