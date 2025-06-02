@@ -63,11 +63,15 @@ jobs:
 
       - name: Setup DVC
         run: |
+          # Create the service account JSON file
+          echo '${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}' > service-account.json
+          
+          # Configure DVC
           dvc config --local core.analytics false
           dvc config --local core.autostage true
           dvc config --local remote.myremote.url gdrive://1XeB-PlDZXOJWW89yBJ0WEbL4UZwub2I6
           dvc config --local remote.myremote.gdrive_use_service_account true
-          dvc config --local remote.myremote.gdrive_service_account_json_file_path ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}
+          dvc config --local remote.myremote.gdrive_service_account_json_file_path service-account.json
 
       - name: Pull DVC data
         run: dvc pull
