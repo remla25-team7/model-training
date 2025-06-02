@@ -8,24 +8,24 @@ stages:
     - data/processed/train.csv
     - data/raw/reviews.tsv
   train_model:
-    cmd: python src/train.py --data data/processed/train.csv --model models/model.pkl
-      --vectorizer output/preprocessor.joblib
+    cmd: python src/train.py --data data/processed/train.csv --model artifacts/model.pkl
+      --vectorizer artifacts/vectorizer.pkl
     deps:
     - data/processed/train.csv
     - src/train.py
     outs:
-    - models/model.pkl
-    - output/preprocessor.joblib
+    - artifacts/model.pkl
+    - artifacts/vectorizer.pkl
     metrics:
     - output/train_metrics.json:
         cache: false
   evaluate_model:
-    cmd: python src/evaluate.py --model models/model.pkl --vectorizer output/preprocessor.joblib
+    cmd: python src/evaluate.py --model artifacts/model.pkl --vectorizer artifacts/vectorizer.pkl
       --test-data data/processed/test.csv
     deps:
     - data/processed/test.csv
-    - models/model.pkl
-    - output/preprocessor.joblib
+    - artifacts/model.pkl
+    - artifacts/vectorizer.pkl
     - src/evaluate.py
     metrics:
     - output/metrics.json:
