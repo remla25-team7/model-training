@@ -134,4 +134,4 @@ jobs:
             gh release create "$VERSION" --title "$VERSION" --notes \
               "Automated build for $VERSION"
           gh release upload "$VERSION" \
-            "models/model.pkl" "output/preprocessor.joblib" --clobber
+            "artifacts/model.pkl" "artifacts/vectorizer.pkl" --clobber
