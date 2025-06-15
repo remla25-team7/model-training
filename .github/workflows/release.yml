@@ -149,7 +149,7 @@ jobs:
           VERSION:     ${{ github.ref_name }}   
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git checkout razvan-w8
+          git checkout main
 
           ver="${VERSION#v}"
           IFS='.' read -r MAJ MIN PATCH <<< "$ver"
@@ -159,7 +159,7 @@ jobs:
           echo "$NEW_VERSION" > version.txt
           git add version.txt
           git commit -m "chore: bump to $NEW_VERSION"
-          git push origin razvan-w8
+          git push origin main
 
           PRE_TAG="v${NEW_VERSION}"
           echo "Creating tag $PRE_TAG"
