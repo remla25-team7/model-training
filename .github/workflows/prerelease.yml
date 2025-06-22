@@ -144,7 +144,7 @@ jobs:
               --title "$TAG" \
               --notes "Automated pre-release $TAG" \
               --prerelease
-          gh release upload "$TAG" artifacts/model.pkl artifacts/vectorizer.pkl
+          gh release upload "$TAG" artifacts/model.pkl artifacts/vectorizer.pkl --clobber
 
       - name: Push version bump & tag
         env:
