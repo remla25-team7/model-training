@@ -1,0 +1,145 @@
+name: Pre-release Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  prerelease:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install dvc dvc-gdrive
+
+      - name: Install test/lint dependencies
+        run: |
+          pip install pytest pylint coverage coverage-badge pyyaml
+
+      - name: Lint with pylint
+        run: |
+          pylint src/ | tee pylint.log
+          SCORE=$(grep 'rated at' pylint.log | sed -E 's/.*rated at ([0-9\.]+)\/10.*/\1/')
+          echo $SCORE > pylint_score.txt
+
+      - name: Generate pylint badge
+        run: |
+          SCORE=$(cat pylint_score.txt)
+          COLOR="brightgreen"
+          if (( $(echo "$SCORE < 9.0" | bc -l) )); then COLOR="yellow"; fi
+          if (( $(echo "$SCORE < 5.0" | bc -l) )); then COLOR="red"; fi
+          printf "<svg xmlns='http://www.w3.org/2000/svg' width='150' height='20'>\
+            <rect width='150' height='20' fill='gray'/>\
+            <rect x='70' width='80' height='20' fill='%s'/>\
+            <text x='10' y='14' fill='white' font-family='Verdana' font-size='12'>Pylint</text>\
+            <text x='75' y='14' fill='white' font-family='Verdana' font-size='12'>%s</text>\
+            </svg>" "$COLOR" "$SCORE" > pylint.svg
+
+      - name: Setup DVC
+        run: |
+          echo '${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}' > service-account.json
+          dvc config --local core.analytics false
+          dvc config --local core.autostage true
+          dvc config --local remote.myremote.url gdrive://1XeB-PlDZXOJWW89yBJ0WEbL4UZwub2I6
+          dvc config --local remote.myremote.gdrive_use_service_account true
+          dvc config --local remote.myremote.gdrive_service_account_json_file_path service-account.json
+
+      - name: Pull DVC data
+        run: |
+          mkdir -p artifacts
+          dvc pull data/raw/reviews.tsv data/processed/train.csv data/processed/test.csv || true
+
+      - name: Run DVC pipeline
+        run: dvc repro
+
+      - name: Push DVC changes
+        run: dvc push
+
+      - name: Run tests and calculate ML Test Score
+        run: |
+          coverage run -m pytest
+          coverage report
+          python tests/calculate_ml_score.py
+
+      - name: Generate coverage badge
+        run: coverage-badge -o coverage.svg -f
+
+      - name: Generate ML Test Score badge
+        run: |
+          SCORE=$(cat ml_test_score.txt)
+          COLOR="brightgreen"
+          if (( $(echo "$SCORE < 5.0" | bc -l) )); then COLOR="yellow"; fi
+          if (( $(echo "$SCORE < 3.0" | bc -l) )); then COLOR="red"; fi
+          printf "<svg xmlns='http://www.w3.org/2000/svg' width='150' height='20'>\
+            <rect width='150' height='20' fill='gray'/>\
+            <rect x='70' width='80' height='20' fill='%s'/>\
+            <text x='10' y='14' fill='white' font-family='Verdana' font-size='12'>ML Test</text>\
+            <text x='75' y='14' fill='white' font-family='Verdana' font-size='12'>%s</text>\
+            </svg>" "$COLOR" "$SCORE" > ml_test_score.svg
+
+      - name: Commit coverage, pylint, and ML Test badges to badge-badges branch
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git fetch origin
+          git worktree add ../badge-badges badge-badges \
+            || git worktree add ../badge-badges -b badge-badges origin/badge-badges
+          cp pylint.svg ../badge-badges/pylint.svg
+          cp coverage.svg ../badge-badges/coverage.svg
+          cp ml_test_score.svg ../badge-badges/ml_test_score.svg
+          cd ../badge-badges
+          git add pylint.svg coverage.svg ml_test_score.svg
+          git commit -m 'Update badges [skip ci]' || echo "No changes to commit"
+          git push origin badge-badges
+
+      - name: Read & bump pre-release version
+        id: bump
+        run: |
+          CUR=$(cat version.txt)
+          BASE="${CUR%-*}"
+          COUNT="${CUR##*.}"
+          COUNT=$((COUNT + 1))
+          NEXT="${BASE}.${COUNT}"
+          echo "$NEXT" > version.txt
+          echo "::set-output name=NEXT::$NEXT"
+
+      - name: Publish pre-release to GitHub
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v${{ steps.bump.outputs.NEXT }}"
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --notes "Automated pre-release $TAG" \
+              --prerelease
+          gh release upload "$TAG" artifacts/model.pkl artifacts/vectorizer.pkl
+
+      - name: Push version bump & tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name 'github-actions'
+          git config user.email 'github-actions@github.com'
+          git add version.txt
+          git commit -m "chore: bump to ${{ steps.bump.outputs.NEXT }}"
+          git push origin main
+          git tag "v${{ steps.bump.outputs.NEXT }}"
+          git push origin "v${{ steps.bump.outputs.NEXT }}"

@@ -1,23 +1,18 @@
-name: Data-Prep - Train - Evaluate - Release
+name: Stable Release
 
 on:
   push:
-    branches:
-      - '**'
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
-  pull_request:
-    branches:
-      - main
 
 permissions:
   contents: write
 
 jobs:
-  pipeline:
+  release:
     runs-on: ubuntu-latest
     env:
-      VERSION:     ${{ github.ref_name }}
+      VERSION: ${{ github.ref_name }}
 
     steps:
       - name: Checkout code
@@ -37,35 +32,32 @@ jobs:
           pip install dvc dvc-gdrive
 
       - name: Install test/lint dependencies
-        run: pip install pytest pylint coverage coverage-badge pyyaml
+        run: |
+          pip install pytest pylint coverage coverage-badge pyyaml
 
       - name: Lint with pylint
         run: |
           pylint src/ | tee pylint.log
-          SCORE=$(tail -n 2 pylint.log | grep 'Your code has been rated at' | sed -E 's/.*rated at ([0-9\.]+)\/10.*/\1/')
-          echo "Pylint score: $SCORE"
+          SCORE=$(grep 'rated at' pylint.log | sed -E 's/.*rated at ([0-9\.]+)\/10.*/\1/')
           echo $SCORE > pylint_score.txt
 
       - name: Generate pylint badge
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          SCORE=$(cat pylint_score.txt)
-          COLOR="brightgreen"
-          if (( $(echo "$SCORE < 9.0" | bc -l) )); then COLOR="yellow"; fi
-          if (( $(echo "$SCORE < 5.0" | bc -l) )); then COLOR="red"; fi
-          echo "<svg xmlns='http://www.w3.org/2000/svg' width='150' height='20'>
+            SCORE=$(cat pylint_score.txt)
+            COLOR="brightgreen"
+            if (( $(echo "$SCORE < 9.0" | bc -l) )); then COLOR="yellow"; fi
+            if (( $(echo "$SCORE < 5.0" | bc -l) )); then COLOR="red"; fi
+            echo "<svg xmlns='http://www.w3.org/2000/svg' width='150' height='20'>
             <rect width='150' height='20' fill='gray'/>
             <rect x='70' width='80' height='20' fill='$COLOR'/>
             <text x='10' y='14' fill='white' font-family='Verdana' font-size='12'>Pylint</text>
             <text x='75' y='14' fill='white' font-family='Verdana' font-size='12'>$SCORE</text>
-          </svg>" > pylint.svg
+            </svg>" > pylint.svg
 
       - name: Setup DVC
         run: |
-          # Create the service account JSON file
           echo '${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}' > service-account.json
-          
-          # Configure DVC
           dvc config --local core.analytics false
           dvc config --local core.autostage true
           dvc config --local remote.myremote.url gdrive://1XeB-PlDZXOJWW89yBJ0WEbL4UZwub2I6
@@ -74,20 +66,14 @@ jobs:
 
       - name: Pull DVC data
         run: |
-          # Create artifacts directory if it doesn't exist
           mkdir -p artifacts
-          # Pull only the data files, ignore missing model files
-          dvc pull data/raw/reviews.tsv data/processed/test.csv data/processed/train.csv || true
+          dvc pull data/raw/reviews.tsv data/processed/train.csv data/processed/test.csv || true
 
       - name: Run DVC pipeline
-        run: |
-          # Run the pipeline to generate model files
-          dvc repro
+        run: dvc repro
 
       - name: Push DVC changes
-        run: |
-          # Push all files including the newly generated ones
-          dvc push
+        run: dvc push
 
       - name: Run tests and calculate ML Test Score
         run: |
@@ -96,72 +82,45 @@ jobs:
           python tests/calculate_ml_score.py
 
       - name: Generate coverage badge
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          coverage-badge -o coverage.svg -f
+        run: coverage-badge -o coverage.svg -f
 
       - name: Generate ML Test Score badge
-        if: startsWith(github.ref, 'refs/tags/')
         run: |
-          SCORE=$(cat ml_test_score.txt)
-          COLOR="brightgreen"
-          if (( $(echo "$SCORE < 5.0" | bc -l) )); then COLOR="yellow"; fi
-          if (( $(echo "$SCORE < 3.0" | bc -l) )); then COLOR="red"; fi
-          echo "<svg xmlns='http://www.w3.org/2000/svg' width='150' height='20'>
-            <rect width='150' height='20' fill='gray'/>
-            <rect x='70' width='80' height='20' fill='$COLOR'/>
-            <text x='10' y='14' fill='white' font-family='Verdana' font-size='12'>ML Test</text>
-            <text x='75' y='14' fill='white' font-family='Verdana' font-size='12'>$SCORE</text>
-          </svg>" > ml_test_score.svg
+            SCORE=$(cat ml_test_score.txt)
+            COLOR="brightgreen"
+            if (( $(echo "$SCORE < 5.0" | bc -l) )); then COLOR="yellow"; fi
+            if (( $(echo "$SCORE < 3.0" | bc -l) )); then COLOR="red"; fi
+            printf "<svg xmlns='http://www.w3.org/2000/svg' width='150' height='20'>\
+            <rect width='150' height='20' fill='gray'/>\
+            <rect x='70' width='80' height='20' fill='%s'/>\
+            <text x='10' y='14' fill='white' font-family='Verdana' font-size='12'>ML Test</text>\
+            <text x='75' y='14' fill='white' font-family='Verdana' font-size='12'>%s</text>\
+            </svg>" "$COLOR" "$SCORE" > ml_test_score.svg
 
-      - name: Commit coverage, pylint, and ML Test badges to badge-badges branch
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
-          git fetch origin
-          git worktree add ../badge-badges badge-badges || git worktree add ../badge-badges -b badge-badges origin/badge-badges
-          rm -f ../badge-badges/coverage.svg
-          rm -f ../badge-badges/pylint.svg
-          rm -f ../badge-badges/ml_test_score.svg
-          cp coverage.svg ../badge-badges/coverage.svg
-          cp pylint.svg ../badge-badges/pylint.svg
-          cp ml_test_score.svg ../badge-badges/ml_test_score.svg
-          cd ../badge-badges
-          git add coverage.svg pylint.svg ml_test_score.svg
-          git commit -m 'Update coverage, pylint, and ML Test Score badges [skip ci]' || echo "No changes to commit"
-          git push origin badge-badges
-
-      - name: Publish artifacts to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Publish model to GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release view "$VERSION" >/dev/null 2>&1 || \
-            gh release create "$VERSION" --title "$VERSION" --notes \
-              "Automated build for $VERSION"
-          gh release upload "$VERSION" \
-            "artifacts/model.pkl" "artifacts/vectorizer.pkl" --clobber
+            gh release create "$VERSION" --title "$VERSION" --notes "Stable release $VERSION"
+          gh release upload "$VERSION" artifacts/model.pkl artifacts/vectorizer.pkl --clobber
 
-      - name: Bump main to next pre-release
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Bump to next pre-release
         env:
-          VERSION:     ${{ github.ref_name }}   
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git checkout main
-
           ver="${VERSION#v}"
           IFS='.' read -r MAJ MIN PATCH <<< "$ver"
           NEXT_PATCH=$((PATCH + 1))
-          NEW_VERSION="${MAJ}.${MIN}.${NEXT_PATCH}-pre"
+          NEW_VERSION="${MAJ}.${MIN}.${NEXT_PATCH}-pre.1"
 
+          git checkout main
           echo "$NEW_VERSION" > version.txt
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
           git add version.txt
           git commit -m "chore: bump to $NEW_VERSION"
           git push origin main
 
-          PRE_TAG="v${NEW_VERSION}"
-          echo "Creating tag $PRE_TAG"
-          git tag "$PRE_TAG"
-          git push origin "$PRE_TAG"
+          git tag "v$NEW_VERSION"
+          git push origin "v$NEW_VERSION"
