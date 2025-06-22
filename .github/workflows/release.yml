@@ -17,7 +17,7 @@ jobs:
   pipeline:
     runs-on: ubuntu-latest
     env:
-      VERSION:     ${{ github.ref_name }}
+      VERSION: ${{ github.ref_name }}
 
     steps:
       - name: Checkout code
@@ -37,14 +37,21 @@ jobs:
           pip install dvc dvc-gdrive
 
       - name: Install test/lint dependencies
-        run: pip install pytest pylint coverage coverage-badge pyyaml
+        run: pip install pytest pylint astroid coverage coverage-badge pyyaml
 
-      - name: Lint with pylint
+      - name: Lint with pylint (standard + ML code smells)
         run: |
-          pylint src/ | tee pylint.log
-          SCORE=$(tail -n 2 pylint.log | grep 'Your code has been rated at' | sed -E 's/.*rated at ([0-9\.]+)\/10.*/\1/')
+          pylint --load-plugins=linters.pylint_ml_smells src/ > lint_full.log || true
+          SCORE=$(tail -n 2 lint_full.log | grep 'Your code has been rated at' | sed -E 's/.*rated at ([0-9\.]+)\/10.*/\1/')
           echo "Pylint score: $SCORE"
           echo $SCORE > pylint_score.txt
+          grep -E "^(.*:[0-9]+:[0-9]+: )?[A-Z][0-9]{4}:" lint_full.log > lint_combined.txt || true
+
+      - name: Upload combined linter output
+        uses: actions/upload-artifact@v4
+        with:
+          name: combined-lint-results
+          path: lint_combined.txt
 
       - name: Generate pylint badge
         if: startsWith(github.ref, 'refs/tags/')
@@ -62,10 +69,7 @@ jobs:
 
       - name: Setup DVC
         run: |
-          # Create the service account JSON file
           echo '${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}' > service-account.json
-          
-          # Configure DVC
           dvc config --local core.analytics false
           dvc config --local core.autostage true
           dvc config --local remote.myremote.url gdrive://1XeB-PlDZXOJWW89yBJ0WEbL4UZwub2I6
@@ -74,19 +78,15 @@ jobs:
 
       - name: Pull DVC data
         run: |
-          # Create artifacts directory if it doesn't exist
           mkdir -p artifacts
-          # Pull only the data files, ignore missing model files
           dvc pull data/raw/reviews.tsv data/processed/test.csv data/processed/train.csv || true
 
       - name: Run DVC pipeline
         run: |
-          # Run the pipeline to generate model files
           dvc repro
 
       - name: Push DVC changes
         run: |
-          # Push all files including the newly generated ones
           dvc push
 
       - name: Run tests and calculate ML Test Score
@@ -114,22 +114,18 @@ jobs:
             <text x='75' y='14' fill='white' font-family='Verdana' font-size='12'>$SCORE</text>
           </svg>" > ml_test_score.svg
 
-      - name: Commit coverage, pylint, and ML Test badges to badge-badges branch
+      - name: Commit badges to badge-badges branch
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
           git fetch origin
           git worktree add ../badge-badges badge-badges || git worktree add ../badge-badges -b badge-badges origin/badge-badges
-          rm -f ../badge-badges/coverage.svg
-          rm -f ../badge-badges/pylint.svg
-          rm -f ../badge-badges/ml_test_score.svg
-          cp coverage.svg ../badge-badges/coverage.svg
-          cp pylint.svg ../badge-badges/pylint.svg
-          cp ml_test_score.svg ../badge-badges/ml_test_score.svg
+          rm -f ../badge-badges/coverage.svg ../badge-badges/pylint.svg ../badge-badges/ml_test_score.svg
+          cp coverage.svg pylint.svg ml_test_score.svg ../badge-badges/
           cd ../badge-badges
           git add coverage.svg pylint.svg ml_test_score.svg
-          git commit -m 'Update coverage, pylint, and ML Test Score badges [skip ci]' || echo "No changes to commit"
+          git commit -m 'Update badges [skip ci]' || echo "No changes to commit"
           git push origin badge-badges
 
       - name: Publish artifacts to GitHub Release
@@ -138,30 +134,24 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release view "$VERSION" >/dev/null 2>&1 || \
-            gh release create "$VERSION" --title "$VERSION" --notes \
-              "Automated build for $VERSION"
-          gh release upload "$VERSION" \
-            "artifacts/model.pkl" "artifacts/vectorizer.pkl" --clobber
+            gh release create "$VERSION" --title "$VERSION" --notes "Automated build for $VERSION"
+          gh release upload "$VERSION" artifacts/model.pkl artifacts/vectorizer.pkl --clobber
 
       - name: Bump main to next pre-release
         if: startsWith(github.ref, 'refs/tags/')
         env:
-          VERSION:     ${{ github.ref_name }}   
+          VERSION: ${{ github.ref_name }}   
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git checkout main
-
           ver="${VERSION#v}"
           IFS='.' read -r MAJ MIN PATCH <<< "$ver"
           NEXT_PATCH=$((PATCH + 1))
           NEW_VERSION="${MAJ}.${MIN}.${NEXT_PATCH}-pre"
-
           echo "$NEW_VERSION" > version.txt
           git add version.txt
           git commit -m "chore: bump to $NEW_VERSION"
           git push origin main
-
           PRE_TAG="v${NEW_VERSION}"
-          echo "Creating tag $PRE_TAG"
           git tag "$PRE_TAG"
           git push origin "$PRE_TAG"
