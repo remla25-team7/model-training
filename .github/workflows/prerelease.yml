@@ -3,7 +3,7 @@ name: Pre-release Pipeline
 on:
   push:
     branches:
-      - main
+      - razvan-w8
 
 permissions:
   contents: write

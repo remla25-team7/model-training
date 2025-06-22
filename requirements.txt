@@ -1,4 +1,4 @@
-remla25-team7-lib-ml
+lib-ml --extra-index-url https://pkg.github.com/remla25-team7
 scikit-learn
 pandas
 joblib
