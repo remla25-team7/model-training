@@ -113,12 +113,26 @@ jobs:
         id: bump
         run: |
           CUR=$(cat version.txt)
-          BASE="${CUR%-*}"
-          COUNT="${CUR##*.}"
-          COUNT=$((COUNT + 1))
-          NEXT="${BASE}.${COUNT}"
+          echo "Current version.txt: $CUR"
+
+          # If it already has "-pre.N", split that off
+          if [[ "$CUR" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-pre\.([0-9]+)$ ]]; then
+            BASE="${BASH_REMATCH[1]}-pre"
+            COUNT="${BASH_REMATCH[2]}"
+          else
+            # First pre-release off a pure X.Y.Z
+            BASE="$CUR-pre"
+            COUNT=0
+          fi
+
+          NEXT="${BASE}.$((COUNT + 1))"
+          echo "Next pre-release version: $NEXT"
+
+          # Persist it
           echo "$NEXT" > version.txt
-          echo "::set-output name=NEXT::$NEXT"
+
+          # Expose for downstream steps
+          echo "NEXT=$NEXT" >> $GITHUB_OUTPUT
 
       - name: Publish pre-release to GitHub
         env:
