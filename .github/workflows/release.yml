@@ -146,6 +146,7 @@ jobs:
           # Stash any uncommitted changes before switching branches
           git stash push -m "Temporary stash before branch switch"
           git checkout main
+          git pull origin main
           ver="${VERSION#v}"
           IFS='.' read -r MAJ MIN PATCH <<< "$ver"
           NEXT_PATCH=$((PATCH + 1))
@@ -155,5 +156,5 @@ jobs:
           git commit -m "chore: bump to $NEW_VERSION"
           git push origin main
           PRE_TAG="v${NEW_VERSION}"
-          # Use GitHub CLI to create the tag instead of git push
+          # Use GitHub CLI to create the tag pointing to the current commit
           gh api repos/${{ github.repository }}/git/refs -f ref="refs/tags/$PRE_TAG" -f sha="$(git rev-parse HEAD)" --method POST
