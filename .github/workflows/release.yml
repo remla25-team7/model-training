@@ -143,6 +143,8 @@ jobs:
           VERSION: ${{ github.ref_name }}   
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Stash any uncommitted changes before switching branches
+          git stash push -m "Temporary stash before branch switch"
           git checkout main
           ver="${VERSION#v}"
           IFS='.' read -r MAJ MIN PATCH <<< "$ver"
