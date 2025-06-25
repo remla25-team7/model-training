@@ -145,6 +145,9 @@ jobs:
         run: |
           # Stash any uncommitted changes before switching branches
           git stash push -m "Temporary stash before branch switch"
+          # Fetch all branches and tags
+          git fetch --all --tags
+          # Checkout main and ensure it's up to date
           git checkout main
           git pull origin main
           ver="${VERSION#v}"
@@ -156,5 +159,8 @@ jobs:
           git commit -m "chore: bump to $NEW_VERSION"
           git push origin main
           PRE_TAG="v${NEW_VERSION}"
+          # Get the commit hash of the version bump commit
+          COMMIT_HASH=$(git rev-parse HEAD)
+          echo "Creating tag $PRE_TAG pointing to commit $COMMIT_HASH"
           # Use GitHub CLI to create the tag pointing to the current commit
-          gh api repos/${{ github.repository }}/git/refs -f ref="refs/tags/$PRE_TAG" -f sha="$(git rev-parse HEAD)" --method POST
+          gh api repos/${{ github.repository }}/git/refs -f ref="refs/tags/$PRE_TAG" -f sha="$COMMIT_HASH" --method POST
