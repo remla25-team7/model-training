@@ -1,15 +1,18 @@
 data:
   schema_validation: auto           # test_data_prep.py
   feature_code_tested: auto         # test_data_prep.py
+  performance_feature_extraction: auto  # test_feature_cost.py
+  
 
 model:
   offline_online_metric_correlation: auto     # test_model_generalization.py
   hyperparameter_tuning: auto                 # test_model_generalization.py
   model_capability_check: auto                # test_model_capabilities.py
-  robustness_typo: auto                       # test_typo_robustness.py
-  robustness_negation: auto                   # test_negation_robustness.py
-  robustness_synonym: auto                    # test_synonym_robustness.py
+  robustness_typo: auto                       # test_typo_robustness.py, test_negation_robustness.py, test_synonym_robustness.py
+                                              # test_metamorphic_repair.py
   robustness_irrelevant: auto                 # test_irrelevance.py
+  robustness_determinism: auto                # test_non_determinism.py
+  robustness_memory: auto                     # test_memory.py
 
 infra:
   script_runs: auto                # test_data_prep.py, test_train.py, test_evaluate.py
