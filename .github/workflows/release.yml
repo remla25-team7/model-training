@@ -36,12 +36,28 @@ jobs:
       - name: Install test/lint dependencies
         run: pip install pytest pylint coverage coverage-badge pyyaml
 
-      - name: Lint with pylint
+      - name: Run Standard Pylint
         run: |
-          pylint src/ | tee pylint.log
-          SCORE=$(tail -n 2 pylint.log | grep 'Your code has been rated at' | sed -E 's/.*rated at ([0-9\.]+)\/10.*/\1/')
-          echo "Pylint score: $SCORE"
-          echo $SCORE > pylint_score.txt
+          pylint src/ | tee pylint_standard.log
+          SCORE=$(tail -n 2 pylint_standard.log | grep 'Your code has been rated at' | sed -E 's/.*rated at ([0-9\.]+)\/10.*/\1/')
+          echo "Standard Pylint score: $SCORE"
+
+      - name: Run Custom ML Code Smell Plugin
+        run: |
+          pylint src/ \
+            --load-plugins=linters.pylint_ml_smells \
+            --disable=all \
+            --enable=W9001,W9002,W9003,W9004 \
+            | tee pylint_smells.log
+
+      - name: Generate Code Smell Report
+        run: |
+          echo "# Custom ML Code Smell Report" > CODE_SMELL_REPORT.md
+          echo "" >> CODE_SMELL_REPORT.md
+          echo "## W9001–W9004 Checks" >> CODE_SMELL_REPORT.md
+          echo '```plaintext' >> CODE_SMELL_REPORT.md
+          cat pylint_smells.log >> CODE_SMELL_REPORT.md
+          echo '```' >> CODE_SMELL_REPORT.md
 
       - name: Generate pylint badge
         run: |
