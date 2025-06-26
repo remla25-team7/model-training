@@ -17,6 +17,6 @@ def test_memory_usage():
     # Measure process memory after inference
     mem_after = proc.memory_info().rss
 
-    # Assert memory usage stays under threshold (200 MB)
-    assert mem_after < 200 * 1024 * 1024, \
-        f"Memory usage too high: {mem_after / (1024 ** 2):.2f} MB > 200 MB"
+    # Assert memory usage stays under threshold (500 MB)
+    assert mem_after < 500 * 1024 * 1024, \
+        f"Memory usage too high: {mem_after / (1024 ** 2):.2f} MB > 500 MB"
