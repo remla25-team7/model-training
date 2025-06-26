@@ -146,6 +146,6 @@ jobs:
           echo "$PRE_VERSION" > version.txt
           git add version.txt
           git commit -m "chore: bump to $PRE_VERSION"
-          git push origin main
+          git push origin HEAD:main
           git tag "$PRE_VERSION"
           git push origin "$PRE_VERSION"
