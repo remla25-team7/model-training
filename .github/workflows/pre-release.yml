@@ -1,21 +1,20 @@
-name: Release - Full Pipeline
+name: Pre-Release 
 
 on:
   push:
-    tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
-    branches:
+    branches-ignore:
       - main
 
 permissions:
   contents: write
 
 jobs:
-  release:
+  pre_release_pipeline:
     runs-on: ubuntu-latest
-    env:
-      VERSION: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
 
+    env:
+      CURRENT_BRANCH: ${{ github.ref_name }}
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -83,8 +82,7 @@ jobs:
           python tests/calculate_ml_score.py
 
       - name: Generate coverage badge
-        run: |
-          coverage-badge -o coverage.svg -f
+        run: coverage-badge -o coverage.svg -f
 
       - name: Generate ML Test Score badge
         run: |
@@ -105,47 +103,44 @@ jobs:
           git config --global user.email 'github-actions@github.com'
           git fetch origin
           git worktree add ../badge-badges badge-badges || git worktree add ../badge-badges -b badge-badges origin/badge-badges
-          rm -f ../badge-badges/coverage.svg ../badge-badges/pylint.svg ../badge-badges/ml_test_score.svg
+          rm -f ../badge-badges/*.svg
           cp coverage.svg pylint.svg ml_test_score.svg ../badge-badges/
           cd ../badge-badges
-          git add .
-          git commit -m 'Update coverage, pylint, and ML Test Score badges [skip ci]' || echo "No changes to commit"
+          git add *.svg
+          git commit -m 'Update badges [skip ci]' || echo "No changes to commit"
           git push origin badge-badges
 
-      - name: Determine release version
-        id: versioning
-        run: |
-          if [[ "${{ github.ref_type }}" == "tag" ]]; then
-            echo "version=${{ github.ref_name }}" >> $GITHUB_OUTPUT
-          else
-            v=$(cat version.txt)
-            ver="${v#v}"
-            IFS='.-' read -r MAJ MIN PATCH _ <<< "$ver"
-            NEXT_PATCH=$((PATCH + 1))
-            RELEASE_VERSION="v${MAJ}.${MIN}.${NEXT_PATCH}"
-            echo "version=$RELEASE_VERSION" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Publish artifacts to GitHub Release
+      - name: Publish artifacts to GitHub pre-release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION=${{ steps.versioning.outputs.version }}
+          VERSION=$(cat version.txt)
           gh release view "$VERSION" >/dev/null 2>&1 || \
-            gh release create "$VERSION" --title "$VERSION" --notes "Automated build for $VERSION"
-          gh release upload "$VERSION" \
-            "artifacts/model.pkl" "artifacts/vectorizer.pkl" --clobber
+            gh release create "$VERSION" --title "$VERSION" --notes "Automated pre-release for $VERSION" --prerelease
+          gh release upload "$VERSION" artifacts/model.pkl artifacts/vectorizer.pkl --clobber
 
-      - name: Bump main to next pre-release
+      - name: Bump to next pre-release version and tag
         env:
-          VERSION: ${{ steps.versioning.outputs.version }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git checkout main
-          PRE_VERSION="$VERSION-pre1"
-          echo "$PRE_VERSION" > version.txt
+          CURRENT_VERSION=$(cat version.txt)
+          echo "Current version: $CURRENT_VERSION"
+
+          # Extract pre-release number
+          base=$(echo $CURRENT_VERSION | sed -E 's/^(v[0-9]+\.[0-9]+\.[0-9]+)-pre[0-9]+$/\1/')
+          pre_num=$(echo $CURRENT_VERSION | sed -E 's/^v[0-9]+\.[0-9]+\.[0-9]+-pre([0-9]+)$/\1/')
+          next_pre=$((pre_num + 1))
+          NEXT_VERSION="${base}-pre${next_pre}"
+
+          echo "Next version: $NEXT_VERSION"
+          echo "$NEXT_VERSION" > version.txt
+
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git checkout $CURRENT_BRANCH
           git add version.txt
-          git commit -m "chore: bump to $PRE_VERSION"
-          git push origin main
-          git tag "$PRE_VERSION"
-          git push origin "$PRE_VERSION"
+          git commit -m "chore: bump to $NEXT_VERSION"
+          git push origin $CURRENT_BRANCH
+
+          git tag "$NEXT_VERSION"
+          git push origin "$NEXT_VERSION"

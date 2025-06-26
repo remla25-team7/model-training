@@ -1,5 +1,3 @@
-"""Evaluation script for sentiment model. """
-
 import json
 import argparse
 import pandas as pd
