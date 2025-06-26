@@ -39,7 +39,7 @@ stages:
       size: 33099
     - path: artifacts/vectorizer.pkl
       hash: md5
-      md5: 5f709e837c47a21a2e3a92e7de1594c9
+      hash: md5: def456
       size: 158817
     - path: output/train_metrics.json
       hash: md5
@@ -55,7 +55,7 @@ stages:
       size: 33099
     - path: artifacts/vectorizer.pkl
       hash: md5
-      md5: 5f709e837c47a21a2e3a92e7de1594c9
+      md5: 9b086b63b72b4f8f4f61a65fdca67ef4
       size: 158817
     - path: data/processed/test.csv
       hash: md5
