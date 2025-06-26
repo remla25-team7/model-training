@@ -1,5 +1,3 @@
-"""Training script for sentiment model."""
-
 import os
 import argparse
 import json
@@ -38,6 +36,7 @@ def train_and_save(
     os.makedirs(os.path.dirname(model_out), exist_ok=True)
     joblib.dump(vec, vec_out)
     joblib.dump(clf, model_out)
+    print(f"Downloaded model at {model_out} and vectorizer at {vec_out}")
 
     # Save training accuracy for DVC
     with open("output/train_metrics.json", "w", encoding="utf-8") as f:
