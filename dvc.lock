@@ -3,10 +3,14 @@ stages:
   data_prep:
     cmd: python src/data_prep.py
     deps:
+    - path: data/raw/reviews.tsv
+      hash: md5
+      md5: 102f1f4193e0bdebdd6cce7f13e0a839
+      size: 54686
     - path: src/data_prep.py
       hash: md5
-      md5: 00ab78ec6e90a4865d1fc529d37481fa
-      size: 2375
+      md5: ac00c4695056586e9d3913f75cfacd50
+      size: 1253
     outs:
     - path: data/processed/test.csv
       hash: md5
@@ -16,10 +20,6 @@ stages:
       hash: md5
       md5: 42bde09c2e9a66f011f84dc299029d73
       size: 44307
-    - path: data/raw/reviews.tsv
-      hash: md5
-      md5: 102f1f4193e0bdebdd6cce7f13e0a839
-      size: 54686
   train_model:
     cmd: python src/train.py --data data/processed/train.csv --model 
       artifacts/model.pkl --vectorizer artifacts/vectorizer.pkl
@@ -30,8 +30,8 @@ stages:
       size: 44307
     - path: src/train.py
       hash: md5
-      md5: eea9f1db2d092453be5dcb11bcd70038
-      size: 1746
+      md5: 59350855a300127f3fa2489acaaae50e
+      size: 1776
     outs:
     - path: artifacts/model.pkl
       hash: md5
@@ -39,7 +39,7 @@ stages:
       size: 33099
     - path: artifacts/vectorizer.pkl
       hash: md5
-      md5: 2126553a87ddf4b006372f831556949a
+      md5: a0d1b5d03bc64b6f2e96f86c29ec887a
       size: 158817
     - path: output/train_metrics.json
       hash: md5
@@ -55,7 +55,7 @@ stages:
       size: 33099
     - path: artifacts/vectorizer.pkl
       hash: md5
-      md5: 2126553a87ddf4b006372f831556949a
+      md5: a0d1b5d03bc64b6f2e96f86c29ec887a
       size: 158817
     - path: data/processed/test.csv
       hash: md5
@@ -63,10 +63,17 @@ stages:
       size: 10990
     - path: src/evaluate.py
       hash: md5
-      md5: 214d9dedfce2f8b565ffc48a4e07ebd2
-      size: 1804
+      md5: 53ab4e98b6847f16e07800b17998662c
+      size: 1757
     outs:
     - path: output/metrics.json
       hash: md5
       md5: d092673fcdcefb6fc45a9970c18a9fc9
       size: 151
+  download_data:
+    cmd: python src/download_data.py
+    outs:
+    - path: data/raw/reviews.tsv
+      hash: md5
+      md5: 102f1f4193e0bdebdd6cce7f13e0a839
+      size: 54686
