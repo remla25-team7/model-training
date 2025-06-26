@@ -38,7 +38,7 @@ jobs:
 
       - name: Lint with pylint
         run: |
-          pylint src/ | tee pylint.log
+          pylint --load-plugins=linters.pylint_ml_smells src/ | tee pylint.log
           SCORE=$(tail -n 2 pylint.log | grep 'Your code has been rated at' | sed -E 's/.*rated at ([0-9\.]+)\/10.*/\1/')
           echo "Pylint score: $SCORE"
           echo $SCORE > pylint_score.txt
