@@ -59,6 +59,10 @@ All pipeline code lives under `src/`. By default we download data into `data/raw
 1. **Download & split data**
 
    ```bash
+   python src/download_data.py
+   ```
+
+   ```bash
    python src/data_prep.py \
      --raw-out   data/raw/a1_RestaurantReviews.tsv \
      --train-out data/processed/train.csv \
